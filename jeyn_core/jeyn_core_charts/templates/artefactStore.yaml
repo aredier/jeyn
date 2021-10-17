@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.jeynComponents.artefactStore.name }}
+spec:
+  replicas: {{ .Values.jeynComponents.artefactStore.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.jeynComponents.artefactStore.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.jeynComponents.artefactStore.name }}
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: {{ .Values.jeynComponents.artefactStore.daprId | quote }}
+        dapr.io/app-port: {{ .Values.jeynComponents.artefactStore.port | quote}}
+    spec:
+      containers:
+      - name: {{ .Values.jeynComponents.artefactStore.name }}
+        image: {{ .Values.jeynComponents.artefactStore.image }}
+        imagePullPolicy: Never
+        ports:
+        - containerPort: {{ .Values.jeynComponents.artefactStore.port }}

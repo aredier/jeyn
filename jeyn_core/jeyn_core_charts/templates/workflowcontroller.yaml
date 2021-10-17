@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.jeynComponents.workflowController.name}}
+spec:
+  replicas: {{ .Values.jeynComponents.workflowController.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.jeynComponents.workflowController.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.jeynComponents.workflowController.name }}
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/app-id: {{ .Values.jeynComponents.workflowController.daprId | quote }}
+        dapr.io/app-port: {{ .Values.jeynComponents.workflowController.port | quote}}
+    spec:
+      containers:
+        - name: {{ .Values.jeynComponents.workflowController.name }}
+          image: {{ .Values.jeynComponents.workflowController.image }}
+          imagePullPolicy: Never
+          ports:
+            - containerPort: {{ .Values.jeynComponents.workflowController.port }}
