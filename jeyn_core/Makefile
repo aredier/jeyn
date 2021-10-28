@@ -11,7 +11,15 @@ workflow-controller:
 
 .PHONY: deploy
 deploy:
+	helm upgrade --install jeyn-core ./jeyn_core_charts --set redis.auth.password==$(kubectl get secret --namespace "default" jeyn-core-redis -o jsonpath="{.data.redis-password}" | base64 --decode)
+
+.PHONY: init
+init:
 	helm upgrade --install jeyn-core ./jeyn_core_charts
+
+.PHONY: dry-run
+dry-run:
+	helm upgrade --install jeyn-core ./jeyn_core_charts --debug --dry-run
 
 .PHONY: delete
 delete:
