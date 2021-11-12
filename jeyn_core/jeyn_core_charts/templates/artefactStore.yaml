@@ -20,5 +20,8 @@ spec:
       - name: {{ .Values.jeynComponents.artefactStore.name }}
         image: {{ .Values.jeynComponents.artefactStore.image }}
         imagePullPolicy: Never
+        envFrom:
+          - configMapRef:
+              name: {{ .Values.jeynComponents.postgress.configMapName }}
         ports:
         - containerPort: {{ .Values.jeynComponents.artefactStore.port }}
