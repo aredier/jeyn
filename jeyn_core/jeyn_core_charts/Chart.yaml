@@ -27,5 +27,5 @@ dependencies:
     version: ~15.4.1
     repository: "https://charts.bitnami.com/bitnami"
   - name: dapr
-    version: ~1.4
+    version: ~1.5
     repository: "https://dapr.github.io/helm-charts"

@@ -1,0 +1,95 @@
+#kind: StorageClass
+#apiVersion: storage.k8s.io/v1
+#metadata:
+#  name: postgress-storage-class
+#  annotations:
+#    storageclass.kubernetes.io/is-default-class: "true"
+# provisioner: microk8s.io/hostpath
+# ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0001
+  labels:
+    app: {{ .Values.jeynComponents.postgress.appName }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /data/pv0001/
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.jeynComponents.postgress.volumeClaim }}
+  labels:
+    app: {{ .Values.jeynComponents.postgress.appName }}
+spec:
+  capacity:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.jeynComponents.postgress.configMapName }}
+  labels:
+    app: {{ .Values.jeynComponents.postgress.appName }}
+data:
+  POSTGRES_DB: awesomedb
+  POSTGRES_USER: amazinguser
+  POSTGRES_PASSWORD: perfectpassword
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.jeynComponents.postgress.appName }}
+  labels:
+    app: {{ .Values.jeynComponents.postgress.appName }}s
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.jeynComponents.postgress.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.jeynComponents.postgress.appName }}
+    spec:
+      containers:
+      - name: {{ .Values.jeynComponents.postgress.appName }}
+        image: postgres:12
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.jeynComponents.postgress.configMapName }}
+        ports:
+        - containerPort: 5432
+          name: postgresdb
+        volumeMounts:
+        - name: pv-data
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: pv-data
+        persistentVolumeClaim:
+          claimName: {{ .Values.jeynComponents.postgress.volumeClaim }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.jeynComponents.postgress.volumeClaim }}
+  labels:
+    app: {{ .Values.jeynComponents.postgress.volumeClaim }}
+spec:
+  ports:
+  - port: 5432
+    name: {{ .Values.jeynComponents.postgress.volumeClaim }}
+  clusterIP: None
+  selector:
+    app: {{ .Values.jeynComponents.postgress.volumeClaim }}
+---

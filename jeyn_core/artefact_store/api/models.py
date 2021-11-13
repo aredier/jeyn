@@ -6,7 +6,10 @@ from rest_framework.renderers import JSONRenderer
 # dapr stuff
 from dapr.clients import DaprClient
 
-from . import exceptions, serializers, constants
+from . import exceptions, constants
+# to avoid circular imports
+import apkubectl proxy
+i
 
 # Create your models here.
 
@@ -46,7 +49,7 @@ class ArtefactClass(models.Model):
             )
 
     def _serialize_to_json(self) -> bytes:
-        serialized = serializers.ArtefactClassSerializer(self)
+        serialized = api.serializers.ArtefactClassSerializer(self)
         return JSONRenderer().render(serialized.data)
 
 
@@ -90,5 +93,5 @@ class Artefact(models.Model):
             )
 
     def _serialize_to_json(self) -> bytes:
-        serializer = serializers.ArtefactSerializer(self)
+        serializer = api.serializers.ArtefactSerializer(self)
         return JSONRenderer().render(serializer)

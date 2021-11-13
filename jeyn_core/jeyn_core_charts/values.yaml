@@ -17,4 +17,8 @@ jeynComponents:
     port: 8000
     daprId: workflow-controller
     image: workflowcontroller
+  postgress:
+    configMapName: postgress-secret
+    volumeClaim: postgres-claim
+    appName: postgres
 
