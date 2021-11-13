@@ -1,8 +1,12 @@
 
 import jsonschema
+# django stuff
 from django.db import models
+from rest_framework.renderers import JSONRenderer
+# dapr stuff
+from dapr.clients import DaprClient
 
-from . import exceptions
+from . import exceptions, serializers, constants
 
 # Create your models here.
 
@@ -17,7 +21,7 @@ class ArtefactClass(models.Model):
     class_name: str = models.CharField(max_length=60, primary_key=True)
     schema_definition: dict = models.JSONField()
 
-    def save(self, **kwargs):
+    def save(self, **kwargs) -> None:
         try:
             super().save(**kwargs)
             self._trigger_save_success_event()
@@ -25,11 +29,25 @@ class ArtefactClass(models.Model):
             self._trigger_save_failure_event()
             raise
 
-    def _trigger_save_success_event(self):
-        pass
+    def _trigger_save_success_event(self) -> None:
+        with DaprClient() as client:
+            client.publish_event(
+                pubsub_name=constants.PUB_SUB_NAME,
+                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATED.value,
+                data=self._serialize_to_json(),
+            )
 
-    def _trigger_save_failure_event(self):
-        pass
+    def _trigger_save_failure_event(self) -> None:
+        with DaprClient() as client:
+            client.publish_event(
+                pubsub_name=constants.PUB_SUB_NAME,
+                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
+                data=self._serialize_to_json(),
+            )
+
+    def _serialize_to_json(self) -> bytes:
+        serialized = serializers.ArtefactClassSerializer(self)
+        return JSONRenderer().render(serialized.data)
 
 
 class Artefact(models.Model):
@@ -39,7 +57,7 @@ class Artefact(models.Model):
     artefact_class: ArtefactClass = models.ForeignKey(ArtefactClass, on_delete=models.CASCADE)
     artefact_data: dict = models.JSONField()
 
-    def save(self, **kwargs):
+    def save(self, **kwargs) -> None:
         self._validate_data()
         try:
             super().save(**kwargs)
@@ -55,7 +73,22 @@ class Artefact(models.Model):
             raise exceptions.ArtefactValidationError(self.artefact_class) from e
 
     def _trigger_save_success_event(self) -> None:
-        pass
+        with DaprClient() as client:
+            client.publish_event(
+                pubsub_name=constants.PUB_SUB_NAME,
+                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
+                data=self._serialize_to_json(),
+            )
 
     def _trigger_save_failure_event(self) -> None:
-        pass
+
+        with DaprClient() as client:
+            client.publish_event(
+                pubsub_name=constants.PUB_SUB_NAME,
+                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
+                data=self._serialize_to_json(),
+            )
+
+    def _serialize_to_json(self) -> bytes:
+        serializer = serializers.ArtefactSerializer(self)
+        return JSONRenderer().render(serializer)

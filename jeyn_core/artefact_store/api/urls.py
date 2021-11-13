@@ -4,7 +4,7 @@ from rest_framework import routers
 from . import views
 
 api_router = routers.DefaultRouter()
-api_router.register("artefact_classes", views.ArtefactClassViewset, basename="artefact_class")
+api_router.register("artefact-classes", views.ArtefactClassViewset, basename="artefact_class")
 api_router.register("artefacts", views.ArtefactViewset, basename="artefact")
 
 urlpatterns = [
