@@ -1,6 +1,8 @@
+import os
 
 import jsonschema
 # django stuff
+import requests
 from django.db import models
 from rest_framework.renderers import JSONRenderer
 # dapr stuff
@@ -8,8 +10,7 @@ from dapr.clients import DaprClient
 
 from . import exceptions, constants
 # to avoid circular imports
-import apkubectl proxy
-i
+import api
 
 # Create your models here.
 
@@ -33,20 +34,30 @@ class ArtefactClass(models.Model):
             raise
 
     def _trigger_save_success_event(self) -> None:
-        with DaprClient() as client:
-            client.publish_event(
-                pubsub_name=constants.PUB_SUB_NAME,
-                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATED.value,
-                data=self._serialize_to_json(),
-            )
+        requests.post(
+            f"http://localhost:{os.environ['DAPR_HTTP_PORT']}"
+            f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATED.value}",
+            data=self._serialize_to_json()
+        )
+        # with DaprClient() as client:
+        #     client.publish_event(
+        #         pubsub_name=constants.PUB_SUB_NAME,
+        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
+        #         data=self._serialize_to_json(),
+        #     )
 
     def _trigger_save_failure_event(self) -> None:
-        with DaprClient() as client:
-            client.publish_event(
-                pubsub_name=constants.PUB_SUB_NAME,
-                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
-                data=self._serialize_to_json(),
-            )
+        requests.post(
+            f"http://localhost:{os.environ['DAPR_HTTP_PORT']}"
+            f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value}",
+            data=self._serialize_to_json()
+        )
+        # with DaprClient() as client:
+        #     client.publish_event(
+        #         pubsub_name=constants.PUB_SUB_NAME,
+        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
+        #         data=self._serialize_to_json(),
+        #     )
 
     def _serialize_to_json(self) -> bytes:
         serialized = api.serializers.ArtefactClassSerializer(self)
@@ -76,22 +87,31 @@ class Artefact(models.Model):
             raise exceptions.ArtefactValidationError(self.artefact_class) from e
 
     def _trigger_save_success_event(self) -> None:
-        with DaprClient() as client:
-            client.publish_event(
-                pubsub_name=constants.PUB_SUB_NAME,
-                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
-                data=self._serialize_to_json(),
-            )
+        requests.post(
+            f"http://localhost:{os.environ['DAPR_HTTP_PORT']}"
+            f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value}",
+            data=self._serialize_to_json()
+        )
+        # with DaprClient() as client:
+        #     client.publish_event(
+        #         pubsub_name=constants.PUB_SUB_NAME,
+        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
+        #         data=self._serialize_to_json(),
+        #     )
 
     def _trigger_save_failure_event(self) -> None:
-
-        with DaprClient() as client:
-            client.publish_event(
-                pubsub_name=constants.PUB_SUB_NAME,
-                topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
-                data=self._serialize_to_json(),
-            )
+        requests.post(
+            f"http://localhost:{os.environ['DAPR_HTTP_PORT']}"
+            f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATION_FAILED.value}",
+            data=self._serialize_to_json()
+        )
+        # with DaprClient() as client:
+        #     client.publish_event(
+        #         pubsub_name=constants.PUB_SUB_NAME,
+        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
+        #         data=self._serialize_to_json(),
+        #     )
 
     def _serialize_to_json(self) -> bytes:
         serializer = api.serializers.ArtefactSerializer(self)
-        return JSONRenderer().render(serializer)
+        return JSONRenderer().render(serializer.data)

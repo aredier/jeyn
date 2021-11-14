@@ -50,7 +50,7 @@ kind: StatefulSet
 metadata:
   name: {{ .Values.jeynComponents.postgress.appName }}
   labels:
-    app: {{ .Values.jeynComponents.postgress.appName }}s
+    app: {{ .Values.jeynComponents.postgress.appName }}
 spec:
   serviceName: "postgres"
   replicas: 1
@@ -82,14 +82,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.jeynComponents.postgress.volumeClaim }}
+  name: {{ .Values.jeynComponents.postgress.appName }}
   labels:
-    app: {{ .Values.jeynComponents.postgress.volumeClaim }}
+    app: {{ .Values.jeynComponents.postgress.appName }}
 spec:
   ports:
   - port: 5432
-    name: {{ .Values.jeynComponents.postgress.volumeClaim }}
+    name: {{ .Values.jeynComponents.postgress.appName }}
   clusterIP: None
   selector:
-    app: {{ .Values.jeynComponents.postgress.volumeClaim }}
+    app: {{ .Values.jeynComponents.postgress.appName }}
 ---
