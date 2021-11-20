@@ -39,12 +39,6 @@ class ArtefactClass(models.Model):
             f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATED.value}",
             data=self._serialize_to_json()
         )
-        # with DaprClient() as client:
-        #     client.publish_event(
-        #         pubsub_name=constants.PUB_SUB_NAME,
-        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
-        #         data=self._serialize_to_json(),
-        #     )
 
     def _trigger_save_failure_event(self) -> None:
         requests.post(
@@ -52,12 +46,6 @@ class ArtefactClass(models.Model):
             f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value}",
             data=self._serialize_to_json()
         )
-        # with DaprClient() as client:
-        #     client.publish_event(
-        #         pubsub_name=constants.PUB_SUB_NAME,
-        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CLASS_CREATION_FAILED.value,
-        #         data=self._serialize_to_json(),
-        #     )
 
     def _serialize_to_json(self) -> bytes:
         serialized = api.serializers.ArtefactClassSerializer(self)
@@ -92,12 +80,6 @@ class Artefact(models.Model):
             f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value}",
             data=self._serialize_to_json()
         )
-        # with DaprClient() as client:
-        #     client.publish_event(
-        #         pubsub_name=constants.PUB_SUB_NAME,
-        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
-        #         data=self._serialize_to_json(),
-        #     )
 
     def _trigger_save_failure_event(self) -> None:
         requests.post(
@@ -105,12 +87,6 @@ class Artefact(models.Model):
             f"/v1.0/publish/pubsub/{constants.PUB_SUB_TOPICS.ARTEFACT_CREATION_FAILED.value}",
             data=self._serialize_to_json()
         )
-        # with DaprClient() as client:
-        #     client.publish_event(
-        #         pubsub_name=constants.PUB_SUB_NAME,
-        #         topic_name=constants.PUB_SUB_TOPICS.ARTEFACT_CREATED.value,
-        #         data=self._serialize_to_json(),
-        #     )
 
     def _serialize_to_json(self) -> bytes:
         serializer = api.serializers.ArtefactSerializer(self)
