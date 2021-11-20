@@ -19,6 +19,9 @@ spec:
       containers:
         - name: {{ .Values.jeynComponents.workflowController.name }}
           image: {{ .Values.jeynComponents.workflowController.image }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.jeynComponents.postgress.configMapName }}
           imagePullPolicy: Never
           ports:
             - containerPort: {{ .Values.jeynComponents.workflowController.port }}
