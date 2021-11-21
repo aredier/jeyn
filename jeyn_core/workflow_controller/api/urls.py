@@ -4,4 +4,5 @@ from . import views
 
 urlpatterns = [
     path("dummy_view", views.DummyView.as_view()),
+    path("workflow", views.SubmitterView.as_view())
 ]
