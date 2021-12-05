@@ -16,7 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django import urls
 
+from api.views import DaprConfigurationView
+
 urlpatterns = [
     urls.path('admin/', admin.site.urls),
-    urls.path("api/", urls.include("api.urls"))
+    urls.path("api/", urls.include("api.urls")),
+    urls.path("dapr/subscribe", DaprConfigurationView.as_view())
 ]
