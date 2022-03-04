@@ -140,3 +140,5 @@ cython_debug/
 
 .idea
 .python-version
+!/sdk/python/pip-wheel-metadata/
+/sdk/python/pip-wheel-metadata/
