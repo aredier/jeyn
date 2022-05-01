@@ -1,5 +1,11 @@
-from jeyn._version import Version
+from ._version import Version
+from ._data_schema import DataSchema
+
+import jeyn.backend
+import jeyn.models
+import jeyn.datasets
 
 __all__ = [
-    "Version"
+    "Version",
+    "DataSchema"
 ]

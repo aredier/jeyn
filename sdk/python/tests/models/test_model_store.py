@@ -4,7 +4,7 @@ import fake_implems
 def test_save_reload_checkpoint(checkpoint, model_store):
 
     model_store.register_serializer(fake_implems.Serializer, [fake_implems.ModelClass])
-    model_store.save(checkpoint)
+    model_store.save_checkpoint(checkpoint)
 
     use_case = model_store.get_use_case(name=checkpoint.use_case.name)
     new_checkpoint = use_case.get_latest_checkpoint()
@@ -17,7 +17,7 @@ def test_save_reload_checkpoint(checkpoint, model_store):
 def test_save_reload_checkpoint_with_renamed_classes(checkpoint, model_store):
 
     model_store.register_serializer(fake_implems.Serializer, [fake_implems.ModelClass])
-    model_store.save(checkpoint)
+    model_store.save_checkpoint(checkpoint)
 
     del model_store
 
@@ -33,5 +33,5 @@ def test_save_reload_checkpoint_with_renamed_classes(checkpoint, model_store):
     )
     use_case = new_model_store.get_use_case(name = checkpoint.use_case.name)
     new_checkpoint = use_case.get_latest_checkpoint()
-    reloaded_model = new_model_store.load(checkpoint)
+    reloaded_model = new_model_store.load_checkpoint(checkpoint)
     test_utils.assert_equal_models(reloaded_model, checkpoint.model)

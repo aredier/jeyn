@@ -48,6 +48,9 @@ class Version:
     def from_version_string(cls, version_string: str) -> "Version":
         return cls(*map(int, version_string.split(".")))
 
+    def to_version_string(self) -> str:
+        return f"{self.major}.{self.minor}.{self.patch}"
+
     def is_compatible(self, other: "Version") -> bool:
         if self.major == 0 and other.major == 0:
             return self.minor == other.minor
