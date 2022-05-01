@@ -1,4 +1,7 @@
-class IOException(Exception):
+from .backend.errors import JeynBaseError
+
+
+class IOException(JeynBaseError):
     pass
 
 
@@ -12,4 +15,11 @@ class LoadingError(IOException):
 class SaveError(IOException):
     """
     error raised when a peice of data cannot be persisted on the jeyn backend.
+    """
+
+
+class SerializationError(JeynBaseError):
+    """
+    error raised when jeyn cannot (de)serialize an object or piece of data before saving or loading
+    it.
     """
