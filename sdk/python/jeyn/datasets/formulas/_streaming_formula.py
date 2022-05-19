@@ -32,14 +32,13 @@ class StreamingFormula(datasets.DatasetFormula):
                 batch_files.append(file_path)
         return datasets.batches.FileBatch(files=batch_files, formula=self)
 
-    def get_latest_batch(self, dataset_store: datasets.DatasetStore) -> datasets.batches.FileBatch:
+    def get_latest_batch(self, dataset_store: datasets.DatasetStore) -> "datasets.batches.FileBatch":
         # get the latest batch
         batches: List[datasets.batches.FileBatch] = dataset_store.get_formula_batches(self)
         files_in_other_batches = {file for batch in batches for file in batch.files}
         all_files = set(os.listdir(self.data_dir))
         files_in_batch = all_files - files_in_other_batches
         return datasets.batches.FileBatch(list(files_in_batch))
-    pass
 
     def get_date_from_path(self, path: str) -> dt.datetime:
         pass

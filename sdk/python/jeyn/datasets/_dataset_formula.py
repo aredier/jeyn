@@ -77,8 +77,8 @@ class DatasetFormula(abc.ABC):
     def formula_kwargs(self):
         return {}
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def batch_type(self) -> Type["datasets.DatasetBatch"]:
         pass
 
