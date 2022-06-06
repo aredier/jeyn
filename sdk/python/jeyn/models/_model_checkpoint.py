@@ -34,7 +34,12 @@ class CheckpointArtefact(backend.artefacts.Artefact):
                     "type": "string",
                     "description": "the path of the model bytes"
                 }
-            }
+            },
+            "required": [
+                "model_bytes_path",
+                "version",
+                "uuid"
+            ]
         }
 
     def __init__(

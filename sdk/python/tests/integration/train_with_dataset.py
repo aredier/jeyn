@@ -3,7 +3,6 @@ import tempfile
 from typing import Any
 import datetime as dt
 
-import numpy as np
 import pandas as pd
 from sklearn.datasets import load_breast_cancer
 import tensorflow as tf
