@@ -1,4 +1,5 @@
 from django.db import models
+from jsonschema import validate
 
 # Create your models here.
 
@@ -11,6 +12,12 @@ class ArtefactType(models.Model):
 class Artefact(models.Model):
     artefact_type_reference = models.ForeignKey(ArtefactType, on_delete=models.CASCADE, related_name="artefacts")
     artefact_data = models.JSONField()
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        # TODO better error managment
+        validate(self.artefact_data, self.artefact_type_reference.schema)
+        return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
 
 class RelationShip(models.Model):
