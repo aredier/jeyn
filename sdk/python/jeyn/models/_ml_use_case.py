@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import attr
 
-from .. import DataSchema, backend, errors
+from .. import backend, errors, typing_utils, catalogs
 
 
 class UseCaseArtefact(backend.artefacts.Artefact):
@@ -22,32 +22,27 @@ class UseCaseArtefact(backend.artefacts.Artefact):
             }
         }
 
-    def __init__(self, output_schema: DataSchema, use_case_name: str, use_case_description):
-        self.output_schema = output_schema
+    def __init__(self, use_case_name: str, use_case_description):
         self.use_case_name = use_case_name
         self.use_case_description = use_case_description
 
-    def artefact_json(self) -> backend.typing.JSON:
+    def artefact_json(self) -> typing_utils.JSON:
         return {"use_case_name": self.use_case_name, "use_case_description": self.use_case_description}
 
     @classmethod
-    def from_artefact_json(cls, artefact_json: backend.typing.JSON) -> "UseCaseArtefact":
+    def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "UseCaseArtefact":
         artefact_data = artefact_json["artefact_data"]
         return cls(
-            output_schema=None,
             use_case_name=artefact_data["use_case_name"],
             use_case_description=artefact_data["use_case_description"]
         )
 
     def get_relationships(self) -> List["backend.artefacts.Relationship"]:
-        # TODO add relationship to data schema
         return []
-
 
 
 @attr.define
 class MlUseCase:
-    output_schema: DataSchema
     name: str
     description: str
     _artefact: Optional["UseCaseArtefact"] = attr.field(init=False, default=None)
@@ -67,13 +62,12 @@ class MlUseCase:
 
     def _to_artefact(self) -> "UseCaseArtefact":
         return UseCaseArtefact(
-            self.output_schema, use_case_name=self.name, use_case_description=self.description
+            use_case_name=self.name, use_case_description=self.description
         )
 
     @classmethod
     def from_artefact(cls, artefact: UseCaseArtefact) -> "MlUseCase":
         use_case = MlUseCase(
-            output_schema=artefact.output_schema,
             name=artefact.use_case_name,
             description=artefact.use_case_description
         )
@@ -85,6 +79,4 @@ class MlUseCase:
         self._artefact = other.artefact
 
     def _check_compatibility(self, other: "MlUseCase"):
-        # TODO
         pass
-
