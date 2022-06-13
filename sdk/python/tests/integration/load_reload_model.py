@@ -1,5 +1,5 @@
 import os.path
-from typing import Any
+from typing_utils import Any
 import tempfile
 
 import numpy as np

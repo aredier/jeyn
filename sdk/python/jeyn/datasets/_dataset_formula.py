@@ -1,11 +1,12 @@
 import abc
+
 from typing import Optional, List, Dict, Any, Type
 
 import attr
 
 import jeyn
-from backend import typing
-from jeyn import Version, datasets, backend
+import typing_utils
+from jeyn import Version, datasets, backend, catalogs
 
 
 class DatasetFormulaArtefact(backend.artefacts.Artefact):
@@ -22,6 +23,7 @@ class DatasetFormulaArtefact(backend.artefacts.Artefact):
                     "type": "string",
                     "description": "precise type of formula to use"
                 },
+                "output_catalog": catalogs.DataCatalog.get_catalog_json_schema(),
                 "formula_kwargs": {
                     "type": "object",
                     "description": "more arguments when initializing"
@@ -29,24 +31,32 @@ class DatasetFormulaArtefact(backend.artefacts.Artefact):
             }
         }
 
-    def __init__(self, name: str, formula_type: str, formula_kwargs: Dict[str, Any]):
+    def __init__(
+            self, name: str, formula_type: str, formula_kwargs: Dict[str, Any], output_catalog: "catalogs.DataCatalog"
+    ):
         self.name = name
         self.formula_type = formula_type
         self.formula_kwargs = formula_kwargs
+        self.output_catalog = output_catalog
 
-    def artefact_json(self) -> typing.JSON:
-        return {"formula_name": self.name, "formula_type": self.formula_type, "formula_kwargs": self.formula_kwargs}
+    def artefact_json(self) -> typing_utils.JSON:
+        return {
+            "formula_name": self.name,
+            "formula_type": self.formula_type,
+            "output_catalog": self.output_catalog.to_json(),
+            "formula_kwargs": self.formula_kwargs
+        }
 
     @classmethod
-    def from_artefact_json(cls, artefact_json: typing.JSON) ->" backend.artefacts.Artefact":
+    def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> " backend.artefacts.Artefact":
         return cls(
             name=artefact_json["artefact_data"]["formula_name"],
             formula_type=artefact_json["artefact_data"]["formula_type"],
-            formula_kwargs=artefact_json["artefact_data"]["formula_kwargs"]
+            formula_kwargs=artefact_json["artefact_data"]["formula_kwargs"],
+            output_catalog=catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["output_catalog"])
         )
 
     def get_relationships(self) -> List["backend.artefacts.Relationship"]:
-        # TODO
         return []
 
 
@@ -64,7 +74,7 @@ class DatasetFormula(abc.ABC):
 
     formula_name: str
     version: Optional[Version]
-    schema: "jeyn.DataSchema"
+    output_catalog: "jeyn.catalogs.DataCatalog"
     _artefact: "DatasetFormulaArtefact" = attr.field(default=None, init=False)
 
     @property
@@ -90,7 +100,8 @@ class DatasetFormula(abc.ABC):
         return DatasetFormulaArtefact(
             name=self.formula_name,
             formula_type=self.__class__.__name__,
-            formula_kwargs=self.formula_kwargs
+            formula_kwargs=self.formula_kwargs,
+            output_catalog=self.output_catalog
         )
 
     @classmethod
@@ -98,7 +109,7 @@ class DatasetFormula(abc.ABC):
         artefact_object = cls(
             formula_name=formula_artefact.name,
             version=None,
-            schema=None,
+            output_catalog=formula_artefact.output_catalog,
             **formula_artefact.formula_kwargs
         )
         artefact_object._artefact = formula_artefact

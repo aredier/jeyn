@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 import attr
 
-from backend import typing
+import typing_utils
 from jeyn import datasets, backend
 
 
@@ -29,14 +29,14 @@ class BatchArtefact(backend.artefacts.Artefact):
 
     def __init__(self,
                  formula_artefact: "datasets.DatasetFormulaArtefact",
-                 batch_kwargs: typing.JSON,
+                 batch_kwargs: typing_utils.JSON,
                  batch_epoch: Optional[int] = None,
                  ):
         self.formula = formula_artefact
         self.batch_epoch = batch_epoch or int(dt.datetime.utcnow().timestamp())
         self.batch_kwargs = batch_kwargs
 
-    def artefact_json(self) -> typing.JSON:
+    def artefact_json(self) -> typing_utils.JSON:
         return {"batch_epoch": self.batch_epoch, "batch_kwargs": self.batch_kwargs}
 
     def get_relationships(self) -> List["artefacts.Relationship"]:
@@ -62,10 +62,10 @@ class DatasetBatch(abc.ABC):
         self.formula.schema.validate(self)
 
     @abc.abstractmethod
-    def get_batch_kwargs(self) -> typing.JSON:
+    def get_batch_kwargs(self) -> typing_utils.JSON:
         pass
 
     @classmethod
     @abc.abstractmethod
-    def from_json(cls, batch_kwargs: typing.JSON) -> "datasets.DatasetBatch":
+    def from_json(cls, batch_kwargs: typing_utils.JSON) -> "datasets.DatasetBatch":
         pass

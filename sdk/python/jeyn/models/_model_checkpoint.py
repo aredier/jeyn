@@ -1,21 +1,22 @@
 import os
 import uuid
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Type
 from uuid import uuid4, UUID
 
 from attr import define, field
 
-from backend import typing
-from .. import Version, datasets, models, errors, backend
+import typing_utils
+from .. import Version, datasets, models, errors, backend, catalogs
 
 
 class CheckpointArtefact(backend.artefacts.Artefact):
-    unique_id: str
-    version: str
+    unique_id: uuid.UUID
+    version: Version
     model_path: str
     parent: Optional["ModelCheckpoint"]
     use_case: "models.MlUseCase"
     training_batch: datasets.DatasetBatch
+    output_catalog: "catalogs.DataCatalog"
 
     class Meta:
         artefact_type_name = "model_checkpoint"
@@ -33,12 +34,14 @@ class CheckpointArtefact(backend.artefacts.Artefact):
                 "model_bytes_path": {
                     "type": "string",
                     "description": "the path of the model bytes"
-                }
+                },
+                "output_catalog": catalogs.DataCatalog.get_catalog_json_schema()
             },
             "required": [
                 "model_bytes_path",
                 "version",
-                "uuid"
+                "uuid",
+                "output_catalog"
             ]
         }
 
@@ -47,39 +50,42 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             unique_id: uuid.UUID,
             version: Version,
             model_path: str,
+            output_catalog: "catalogs.DataCatalog",
             parent: Optional["ModelCheckpoint"],
             use_case: "models.MlUseCase",
             training_batch: datasets.DatasetBatch
     ):
-        self.unique_id = str(unique_id)
-        self.version = version.to_version_string()
+        self.unique_id = unique_id
+        self.version = version
         self.model_path = model_path
         self.parent = parent
         self.training_batch = training_batch
         self.use_case = use_case
-        self.store = models.ModelStore()
+        self.output_catalog = output_catalog
         super().__init__()
 
-    def artefact_json(self) -> typing.JSON:
+    def artefact_json(self) -> typing_utils.JSON:
         return {
-            "uuid": self.unique_id,
-            "version": self.version,
-            "model_bytes_path": self.model_path
+            "uuid": str(self.unique_id),
+            "version": self.version.to_version_string(),
+            "model_bytes_path": self.model_path,
+            "output_catalog": self.output_catalog.to_json()
         }
 
     @classmethod
-    def from_artefact_json(cls, artefact_json: typing.JSON) -> "CheckpointArtefact":
+    def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "CheckpointArtefact":
         return cls(
             unique_id=uuid.UUID(artefact_json["artefact_data"]["uuid"]),
             version=Version.from_version_string(artefact_json["artefact_data"]["version"]),
             model_path=artefact_json["artefact_data"]["model_bytes_path"],
             parent=None,
             use_case=cls._reload_use_case_from_relationship_json(artefact_json["parents"]),
-            training_batch=None
+            training_batch=None,
+            output_catalog=artefact_json["artefact_data"]["output_catalog"]
         )
 
     @staticmethod
-    def _reload_use_case_from_relationship_json(parent_relationships_json: List[typing.JSON]) -> "models.MlUseCase":
+    def _reload_use_case_from_relationship_json(parent_relationships_json: List[typing_utils.JSON]) -> "models.MlUseCase":
         use_case_artefact_ids = [
             relationship["parent"]
             for relationship in parent_relationships_json
@@ -124,20 +130,21 @@ class ModelCheckpoint:
     use_case: "models.MLUseCase"
     version: Version
     model: Optional[Any]
+    output_catalog: catalogs.DataCatalog
 
     parent_checkpoint: Optional["ModelCheckpoint"] = None
     _uuid: UUID = field(init=False, factory=uuid4)
     _artefact: Optional[CheckpointArtefact] = field(init=False, default=None)
 
-    # TODO load save in the model store
     @classmethod
     def from_artefact(cls, checkpoint_artefact: CheckpointArtefact) -> "ModelCheckpoint":
         checkpoint = cls(
             dataset_batch=None,
             use_case=checkpoint_artefact.use_case,
-            version=Version.from_version_string(checkpoint_artefact.version),
+            version=checkpoint_artefact.version,
             model=None,
-            parent_checkpoint=None
+            parent_checkpoint=None,
+            output_catalog=checkpoint_artefact.output_catalog
         )
         checkpoint.artefact = checkpoint_artefact
         return checkpoint
@@ -160,7 +167,8 @@ class ModelCheckpoint:
             model_path=self.path,
             parent=self.parent_checkpoint,
             training_batch=self.dataset_batch,
-            use_case=self.use_case
+            use_case=self.use_case,
+            output_catalog=self.output_catalog
         )
 
     @property

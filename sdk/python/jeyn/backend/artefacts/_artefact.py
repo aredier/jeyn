@@ -4,7 +4,8 @@ from typing import List, Any, Dict
 
 import requests
 
-from .. import errors, typing, constants, artefacts
+from .. import errors, constants, artefacts
+import typing_utils
 
 
 class Artefact(abc.ABC):
@@ -27,12 +28,12 @@ class Artefact(abc.ABC):
         return self._artefact_id
 
     @abc.abstractmethod
-    def artefact_json(self) -> typing.JSON:
+    def artefact_json(self) -> typing_utils.JSON:
         pass
 
     @classmethod
     @abc.abstractmethod
-    def from_artefact_json(cls, artefact_json: typing.JSON) -> "Artefact":
+    def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "Artefact":
         pass
 
     @abc.abstractmethod
@@ -89,7 +90,7 @@ class Artefact(abc.ABC):
         for relationship in self.get_relationships():
             relationship.save()
 
-    def generate_db_json(self) -> typing.JSON:
+    def generate_db_json(self) -> typing_utils.JSON:
         type_route = f"{constants.store_route}/api/artefact-type/{self._meta.artefact_type_name}/"
         return {
             "artefact_type_reference": self._meta.artefact_type_name,

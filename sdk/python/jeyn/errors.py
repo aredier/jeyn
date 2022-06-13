@@ -23,3 +23,9 @@ class SerializationError(JeynBaseError):
     error raised when jeyn cannot (de)serialize an object or piece of data before saving or loading
     it.
     """
+
+
+class DataValidationError(JeynBaseError):
+    """
+    error raised when a specific piece of data does not respect it's contract
+    """
