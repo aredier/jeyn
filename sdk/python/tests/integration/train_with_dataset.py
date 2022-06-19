@@ -54,9 +54,9 @@ def init_dataset(store: jeyn.datasets.DatasetStore):
 
 
 if __name__ == '__main__':
-    store = jeyn.datasets.DatasetStore()
-    init_dataset(store)
-    dataset_formula = store.get_formula_from_name("test_formula", jeyn.datasets.formulas.StreamingFormula)
+    dataset_store = jeyn.datasets.DatasetStore()
+    init_dataset(dataset_store)
+    dataset_formula = dataset_store.get_formula_from_name("test_formula", jeyn.datasets.formulas.StreamingFormula)
     training_data = dataset_formula.get_new_batch()
 
     dataset = pd.read_csv(training_data.files[-1])
@@ -66,6 +66,7 @@ if __name__ == '__main__':
     ])
     model.compile("adam", "mse")
     model.fit(dataset.loc[:, ["mean radius", "mean texture", "mean perimeter"]], dataset["targets"])
+    dataset_store.save_batch(training_data)
 
     store = jeyn.models.ModelStore()
     serializer = KerasSerializer()
@@ -79,9 +80,11 @@ if __name__ == '__main__':
         use_case=use_case,
         version=jeyn.Version.from_version_string("0.1.0"),
         output_catalog=InferenceDataCatalog(),
+        input_catalog=InputDataCatalog(),
         dataset_batch=training_data,
         model=model
     )
+
     store.save_checkpoint(checkpoint)
 
     reloaded_use_case = store.get_use_case(name="test_use_case")

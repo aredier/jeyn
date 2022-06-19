@@ -13,5 +13,5 @@ class FileBatch(datasets.DatasetBatch):
         return {"files": self.files}
 
     @classmethod
-    def from_json(cls, batch_kwargs: typing_utils.JSON) -> "datasets.DatasetBatch":
-        return cls(**batch_kwargs)
+    def from_json(cls, formula: datasets.DatasetFormula, batch_kwargs: typing_utils.JSON) -> "datasets.DatasetBatch":
+        return cls(formula=formula, **batch_kwargs)

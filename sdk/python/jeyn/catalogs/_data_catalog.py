@@ -52,8 +52,7 @@ class DataCatalog:
             raise errors.DataValidationError(f"duplicate features with the name {feature.name}")
         cls._features[feature.name] = feature
 
-    @classmethod
-    def includes(cls, other: Type["DataCatalog"]) -> bool:
+    def includes(cls, other: "DataCatalog") -> bool:
         """
         check wether another catalog is included in this catalog.
 
@@ -76,7 +75,7 @@ class DataCatalog:
 
         Returns: True if `other` is included `False` otherwise.
         """
-        pass
+        return True
 
     @staticmethod
     def get_catalog_json_schema() -> typing_utils.JSON:
