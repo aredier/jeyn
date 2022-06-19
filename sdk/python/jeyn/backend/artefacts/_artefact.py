@@ -9,7 +9,7 @@ import typing_utils
 
 
 class Artefact(abc.ABC):
-    _artefact_id = int
+    _artefact_id: int = None
     _meta: artefacts.ArtefactClassMeta = None
 
     def __init_subclass__(cls, **kwargs):
@@ -67,7 +67,7 @@ class Artefact(abc.ABC):
     def get_from_id(cls, artefact_id: int) -> "Artefact":
         response = requests.get(f"{constants.store_route}/api/artefact/{artefact_id}")
         response.raise_for_status()
-        return cls.from_artefact_json(response.json())
+        return cls.from_artefact_json(artefact_json=response.json())
 
     @staticmethod
     def _build_query_string(query_dict: Dict[str, Any]) -> str:

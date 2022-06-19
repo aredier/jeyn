@@ -34,14 +34,20 @@ class DatasetStore:
 
     def get_formula_batches(self, formula: datasets.DatasetFormula) -> List[datasets.DatasetBatch]:
         return [
-            formula.batch_type.from_artefact(datasets.DatasetFormulaArtefact.get_from_id((batch["child"])))
+            formula.batch_type.from_artefact(formula=formula, artefact=datasets.BatchArtefact.get_from_id(batch["child"]))
             for batch in self._get_formula_batch_relation_jsons(formula)
         ]
 
-    def get_latest_formula_batch(self, formula: datasets.DatasetFormula):
-        relation_jsons = self._get_formula_batch_relation_jsons(formula=formula)
-        if len(relation_jsons) == 0 :
+    def get_latest_formula_batch(self, formula: datasets.DatasetFormula) -> datasets.DatasetBatch:
+        batches = self.get_formula_batches(formula)
+        if len(batches) == 0:
             return None
-        latest_batch = max(relation_jsons, key=operator.itemgetter("batch_epoch"))
-        return formula.batch_type.from_artefact(datasets.DatasetFormulaArtefact.get_from_id((latest_batch["child"])))
+
+        latest_batch = max(batches, key=operator.attrgetter("batch_epoch"))
+        return latest_batch
+
+    def save_batch(self, batch: datasets.DatasetBatch):
+        batch_artefact = batch.artefact
+        batch_artefact.save()
+
 

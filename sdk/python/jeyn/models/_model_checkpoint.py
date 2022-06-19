@@ -17,6 +17,7 @@ class CheckpointArtefact(backend.artefacts.Artefact):
     use_case: "models.MlUseCase"
     training_batch: datasets.DatasetBatch
     output_catalog: "catalogs.DataCatalog"
+    input_catalog: "catalogs.DataCatalog"
 
     class Meta:
         artefact_type_name = "model_checkpoint"
@@ -35,13 +36,15 @@ class CheckpointArtefact(backend.artefacts.Artefact):
                     "type": "string",
                     "description": "the path of the model bytes"
                 },
-                "output_catalog": catalogs.DataCatalog.get_catalog_json_schema()
+                "output_catalog": catalogs.DataCatalog.get_catalog_json_schema(),
+                "input_catalog": catalogs.DataCatalog.get_catalog_json_schema(),
             },
             "required": [
                 "model_bytes_path",
                 "version",
                 "uuid",
-                "output_catalog"
+                "output_catalog",
+                "input_catalog"
             ]
         }
 
@@ -51,6 +54,7 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             version: Version,
             model_path: str,
             output_catalog: "catalogs.DataCatalog",
+            input_catalog: "catalogs.DataCatalog",
             parent: Optional["ModelCheckpoint"],
             use_case: "models.MlUseCase",
             training_batch: datasets.DatasetBatch
@@ -62,6 +66,7 @@ class CheckpointArtefact(backend.artefacts.Artefact):
         self.training_batch = training_batch
         self.use_case = use_case
         self.output_catalog = output_catalog
+        self.input_catalog = input_catalog
         super().__init__()
 
     def artefact_json(self) -> typing_utils.JSON:
@@ -69,11 +74,13 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             "uuid": str(self.unique_id),
             "version": self.version.to_version_string(),
             "model_bytes_path": self.model_path,
-            "output_catalog": self.output_catalog.to_json()
+            "output_catalog": self.output_catalog.to_json(),
+            "input_catalog": self.input_catalog.to_json()
         }
 
     @classmethod
     def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "CheckpointArtefact":
+        # TODO batch relationship
         return cls(
             unique_id=uuid.UUID(artefact_json["artefact_data"]["uuid"]),
             version=Version.from_version_string(artefact_json["artefact_data"]["version"]),
@@ -81,7 +88,8 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             parent=None,
             use_case=cls._reload_use_case_from_relationship_json(artefact_json["parents"]),
             training_batch=None,
-            output_catalog=artefact_json["artefact_data"]["output_catalog"]
+            output_catalog=catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["output_catalog"]),
+            input_catalog = catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["input_catalog"])
         )
 
     @staticmethod
@@ -103,6 +111,11 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             backend.artefacts.Relationship(
                 relationship_type="checkpoint_use_case",
                 parent=self.use_case.artefact,
+                child=self
+            ),
+            backend.artefacts.Relationship(
+                relationship_type="checkpoint_dataset_batch",
+                parent=self.training_batch.artefact,
                 child=self
             )
         ]
@@ -126,25 +139,34 @@ class ModelCheckpoint:
     """
 
     # TODO save the batch relationship
+    # TODO input_catalog inside the artefacts
     dataset_batch: datasets.DatasetBatch
     use_case: "models.MLUseCase"
     version: Version
     model: Optional[Any]
     output_catalog: catalogs.DataCatalog
+    input_catalog: catalogs.DataCatalog
 
     parent_checkpoint: Optional["ModelCheckpoint"] = None
     _uuid: UUID = field(init=False, factory=uuid4)
     _artefact: Optional[CheckpointArtefact] = field(init=False, default=None)
 
+    def __attrs_post_init__(self):
+        if not self.input_catalog.includes(self.dataset_batch.formula.output_catalog):
+            # TODO better error
+            raise errors.DataValidationError("model inputs are not included in the dataset's output.")
+
     @classmethod
     def from_artefact(cls, checkpoint_artefact: CheckpointArtefact) -> "ModelCheckpoint":
+        # TODO add the dataset batch
         checkpoint = cls(
             dataset_batch=None,
             use_case=checkpoint_artefact.use_case,
             version=checkpoint_artefact.version,
             model=None,
             parent_checkpoint=None,
-            output_catalog=checkpoint_artefact.output_catalog
+            output_catalog=checkpoint_artefact.output_catalog,
+            input_catalog=checkpoint_artefact.input_catalog
         )
         checkpoint.artefact = checkpoint_artefact
         return checkpoint
@@ -168,7 +190,8 @@ class ModelCheckpoint:
             parent=self.parent_checkpoint,
             training_batch=self.dataset_batch,
             use_case=self.use_case,
-            output_catalog=self.output_catalog
+            output_catalog=self.output_catalog,
+            input_catalog=self.input_catalog
         )
 
     @property
