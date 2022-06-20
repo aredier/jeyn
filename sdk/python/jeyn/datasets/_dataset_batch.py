@@ -5,8 +5,9 @@ from uuid import UUID, uuid4
 
 import attr
 
+import catalogs
 import typing_utils
-from jeyn import datasets, backend
+from .. import datasets, backend, errors
 
 
 class BatchArtefact(backend.artefacts.Artefact):
@@ -46,9 +47,12 @@ class BatchArtefact(backend.artefacts.Artefact):
 
     @classmethod
     def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "Artefact":
-        #TODO reload formula from relationbships.
+        formula_id = cls.extract_artefact_from_singleton_relationship(
+            relationship_jsons=artefact_json["parents"], relationship_type="batch_formula"
+        )
+        formula_artefact = datasets.DatasetFormulaArtefact.get_from_id(formula_id)
         return cls(
-            formula_artefact=None,
+            formula_artefact=formula_artefact,
             batch_epoch=artefact_json["artefact_data"]["batch_epoch"],
             batch_kwargs=artefact_json["artefact_data"]["batch_kwargs"],
         )
@@ -64,7 +68,7 @@ class DatasetBatch(abc.ABC):
     yield the same data.
     """
 
-    formula: "datasets.DatasetFormula"
+    formula: Optional["datasets.DatasetFormula"]
     # _uuid: UUID = attr.field(init=False, factory=uuid4)
     _artefact: Optional[BatchArtefact] = attr.field(init=False, default=None)
 
@@ -74,6 +78,12 @@ class DatasetBatch(abc.ABC):
             self._artefact = self._to_artefact()
         return self._artefact
 
+    @property
+    def output_catalog(self) -> "catalogs.DataCatalog":
+        if self.formula is None:
+            raise errors.DataConsistencyError("cannot get output catalog since dataset formula is None")
+        return self.formula.output_catalog
+
     @artefact.setter
     def artefact(self, artefact: BatchArtefact):
         self._artefact = artefact
@@ -82,6 +92,22 @@ class DatasetBatch(abc.ABC):
     def batch_epoch(self) -> int:
         return self.artefact.batch_epoch
 
+    @classmethod
+    @abc.abstractmethod
+    def from_json(
+            cls, formula: Optional["datasets.DatasetFormula"], batch_kwargs: typing_utils.JSON
+    ) -> "datasets.DatasetBatch":
+        pass
+
+    @abc.abstractmethod
+    def get_batch_kwargs(self) -> typing_utils.JSON:
+        pass
+
+    @classmethod
+    def from_artefact(
+            cls, formula: Optional["datasets.DatasetFormula"], artefact: "datasets.BatchArtefact"
+    ) -> "DatasetBatch":
+        return cls.from_json(formula=formula, batch_kwargs=artefact.batch_kwargs)
 
     def validate_schema(self):
         self.formula.schema.validate(self)
@@ -91,16 +117,3 @@ class DatasetBatch(abc.ABC):
             formula_artefact=self.formula.artefact,
             batch_kwargs=self.get_batch_kwargs()
         )
-
-    @abc.abstractmethod
-    def get_batch_kwargs(self) -> typing_utils.JSON:
-        pass
-
-    @classmethod
-    def from_artefact(cls, formula: "datasets.DatasetFormula", artefact: "datasets.BatchArtefact") -> "DatasetBatch":
-        return cls.from_json(formula=formula, batch_kwargs=artefact.batch_kwargs)
-
-    @classmethod
-    @abc.abstractmethod
-    def from_json(cls, formula: "datasets.DatasetFormula", batch_kwargs: typing_utils.JSON) -> "datasets.DatasetBatch":
-        pass

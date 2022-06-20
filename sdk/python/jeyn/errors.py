@@ -29,3 +29,9 @@ class DataValidationError(JeynBaseError):
     """
     error raised when a specific piece of data does not respect it's contract
     """
+
+
+class DataConsistencyError(JeynBaseError):
+    """
+    error raised when data is inconsistent
+    """

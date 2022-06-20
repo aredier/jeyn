@@ -1,7 +1,7 @@
 import abc
 from typing import Any, Type
 
-from .. import catalogs
+from jeyn import catalogs
 
 
 class CatalogValidator(abc.ABC):

@@ -1,6 +1,6 @@
-from typing import Type, Dict, Optional
+from typing import Type, Dict, Optional, Union
 
-from .. import catalogs, typing_utils, errors
+from jeyn import catalogs, typing_utils, errors
 
 
 class DataCatalog:
@@ -37,6 +37,24 @@ class DataCatalog:
                 if isinstance(class_attribute, catalogs.Feature):
                     self._add_feature_to_instance(class_attribute_name, class_attribute)
 
+    def __contains__(self, item: Union[str, "catalogs.Feature"]):
+        if isinstance(item, str):
+            return item in self._features
+        if isinstance(item, catalogs.Feature):
+            return item.name in self._features
+        raise errors.DataConsistencyError(
+            f"cannot check if object of type {item.__class__.__name__} is a feature of a data catalog"
+        )
+
+    def __getitem__(self, item: str):
+        if isinstance(item, str):
+            return self._features[item]
+        if isinstance(item, catalogs.Feature):
+            return self._features[item.name]
+        raise errors.DataConsistencyError(
+            f"invalid class {item.__class__.__name__} for a feature key inside a data catalog"
+        )
+
     def _add_feature_to_instance(self, feature_name: str, feature: "catalogs.Feature"):
         if feature.name is None:
             feature.name = feature_name
@@ -52,7 +70,7 @@ class DataCatalog:
             raise errors.DataValidationError(f"duplicate features with the name {feature.name}")
         cls._features[feature.name] = feature
 
-    def includes(cls, other: "DataCatalog") -> bool:
+    def includes(self, other: "DataCatalog") -> bool:
         """
         check wether another catalog is included in this catalog.
 
@@ -75,6 +93,11 @@ class DataCatalog:
 
         Returns: True if `other` is included `False` otherwise.
         """
+        for feature_name, feature in self._features.items():
+            if feature_name not in other:
+                return False
+            if not feature != other[feature_name]:
+                return False
         return True
 
     @staticmethod

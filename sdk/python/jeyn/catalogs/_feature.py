@@ -5,7 +5,7 @@ from typing import List, Optional
 import attr
 
 import typing_utils
-from .. import errors
+from jeyn import errors
 
 
 class Dtypes(enum.Enum):
