@@ -50,4 +50,9 @@ class DatasetStore:
         batch_artefact = batch.artefact
         batch_artefact.save()
 
+    @classmethod
+    def get_batch_from_id(cls, batch_id: int) -> "datasets.batches.GenericBatch":
+        batch_artefact = datasets.BatchArtefact.get_from_id(batch_id)
+        return datasets.batches.GenericBatch.from_artefact(formula=None, artefact=batch_artefact)
+
 

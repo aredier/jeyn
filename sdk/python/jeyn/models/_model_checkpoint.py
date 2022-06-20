@@ -87,24 +87,22 @@ class CheckpointArtefact(backend.artefacts.Artefact):
             model_path=artefact_json["artefact_data"]["model_bytes_path"],
             parent=None,
             use_case=cls._reload_use_case_from_relationship_json(artefact_json["parents"]),
-            training_batch=None,
+            training_batch=cls._reload_dataset_batch_from_relationship_json(artefact_json["parents"]),
             output_catalog=catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["output_catalog"]),
-            input_catalog = catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["input_catalog"])
+            input_catalog=catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["input_catalog"])
         )
 
-    @staticmethod
-    def _reload_use_case_from_relationship_json(parent_relationships_json: List[typing_utils.JSON]) -> "models.MlUseCase":
-        use_case_artefact_ids = [
-            relationship["parent"]
-            for relationship in parent_relationships_json
-            if relationship["relationship_type"] == "checkpoint_use_case"
-        ]
-        if len(use_case_artefact_ids) == 0:
-            raise errors.LoadingError("checkpoint has no use case relationship, backend data seems corrupt.")
-        if len(use_case_artefact_ids) > 1:
-            raise errors.LoadingError("checkpoint seems to have several use cases, backend data seems corrupt.")
-        use_case = models.ModelStore.get_use_case_from_id(use_case_id=use_case_artefact_ids[0])
-        return use_case
+    @classmethod
+    def _reload_dataset_batch_from_relationship_json(
+            cls, checkpoint_relationship_jsons: List[typing_utils.JSON]
+    ) -> "datasets.DatasetBatch":
+        batch_id = cls.extract_artefact_from_singleton_relationship(checkpoint_relationship_jsons, "checkpoint_dataset_batch")
+        return datasets.DatasetStore.get_batch_from_id(batch_id)
+
+    @classmethod
+    def _reload_use_case_from_relationship_json(cls, checkpoint_relationship_jsons: List[typing_utils.JSON]) -> "models.MlUseCase":
+        use_case_id = cls.extract_artefact_from_singleton_relationship(checkpoint_relationship_jsons, "checkpoint_use_case")
+        return models.ModelStore.get_use_case_from_id(use_case_id=use_case_id)
 
     def get_relationships(self):
         return [
@@ -152,7 +150,7 @@ class ModelCheckpoint:
     _artefact: Optional[CheckpointArtefact] = field(init=False, default=None)
 
     def __attrs_post_init__(self):
-        if not self.input_catalog.includes(self.dataset_batch.formula.output_catalog):
+        if not self.input_catalog.includes(self.dataset_batch.output_catalog):
             # TODO better error
             raise errors.DataValidationError("model inputs are not included in the dataset's output.")
 
@@ -160,7 +158,7 @@ class ModelCheckpoint:
     def from_artefact(cls, checkpoint_artefact: CheckpointArtefact) -> "ModelCheckpoint":
         # TODO add the dataset batch
         checkpoint = cls(
-            dataset_batch=None,
+            dataset_batch=checkpoint_artefact.training_batch,
             use_case=checkpoint_artefact.use_case,
             version=checkpoint_artefact.version,
             model=None,
