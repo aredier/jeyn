@@ -28,9 +28,7 @@ class StreamingFormula(datasets.DatasetFormula):
         for file_path in glob.iglob(os.path.join(self.data_dir, "**")):
             if not os.path.exists(file_path):
                 continue
-            #TODO implement
-            # if latest_batch is None or self.get_date_from_path(file_path) > latest_batch.max_date:
-            if True:
+            if latest_batch is None or self.get_date_from_path(file_path) > latest_batch.date:
                 batch_files.append(file_path)
         return datasets.batches.FileBatch(files=batch_files, formula=self)
 
@@ -42,5 +40,7 @@ class StreamingFormula(datasets.DatasetFormula):
         files_in_batch = all_files - files_in_other_batches
         return datasets.batches.FileBatch(list(files_in_batch))
 
-    def get_date_from_path(self, path: str) -> dt.datetime:
-        pass
+    @staticmethod
+    def get_date_from_path(path: str) -> dt.datetime:
+        basename = os.path.basename(path)
+        return dt.datetime.fromisoformat(basename.split(".")[0])

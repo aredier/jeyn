@@ -80,7 +80,6 @@ class CheckpointArtefact(backend.artefacts.Artefact):
 
     @classmethod
     def from_artefact_json(cls, artefact_json: typing_utils.JSON) -> "CheckpointArtefact":
-        # TODO batch relationship
         return cls(
             unique_id=uuid.UUID(artefact_json["artefact_data"]["uuid"]),
             version=Version.from_version_string(artefact_json["artefact_data"]["version"]),
@@ -121,11 +120,10 @@ class CheckpointArtefact(backend.artefacts.Artefact):
     def to_checkpoint(self, serializer: "models.ModelSerializer") -> "ModelCheckpoint":
         with open(self.model_path, "rb") as model_bytes:
             model = serializer.from_bytes(model_bytes=model_bytes.read())
-        # TODO handle the uuid thing
         return ModelCheckpoint(
             dataset_batch=self.training_batch,
             use_case=self.use_case,
-            version=Version.from_version_string(self.version),
+            version=self.version,
             model=model
         )
 
@@ -136,8 +134,6 @@ class ModelCheckpoint:
     A model checkpoint is the metadata of saved model.
     """
 
-    # TODO save the batch relationship
-    # TODO input_catalog inside the artefacts
     dataset_batch: datasets.DatasetBatch
     use_case: "models.MLUseCase"
     version: Version
@@ -151,12 +147,10 @@ class ModelCheckpoint:
 
     def __attrs_post_init__(self):
         if not self.input_catalog.includes(self.dataset_batch.output_catalog):
-            # TODO better error
             raise errors.DataValidationError("model inputs are not included in the dataset's output.")
 
     @classmethod
     def from_artefact(cls, checkpoint_artefact: CheckpointArtefact) -> "ModelCheckpoint":
-        # TODO add the dataset batch
         checkpoint = cls(
             dataset_batch=checkpoint_artefact.training_batch,
             use_case=checkpoint_artefact.use_case,
@@ -206,7 +200,6 @@ class ModelCheckpoint:
 
     def save_model_object(self, serializer: models.ModelSerializer):
         model_bytes = serializer.to_bytes(self.model)
-        # TODO use dapr blob storage api.
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
         with open(self.path, "wb") as model_file:
             model_file.write(model_bytes)

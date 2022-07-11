@@ -92,6 +92,10 @@ class DatasetBatch(abc.ABC):
     def batch_epoch(self) -> int:
         return self.artefact.batch_epoch
 
+    @property
+    def date_time(self) -> dt.datetime:
+        return dt.datetime.utcfromtimestamp(self.batch_epoch)
+
     @classmethod
     @abc.abstractmethod
     def from_json(

@@ -96,7 +96,7 @@ class DataCatalog:
         for feature_name, feature in self._features.items():
             if feature_name not in other:
                 return False
-            if not feature != other[feature_name]:
+            if feature != other[feature_name]:
                 return False
         return True
 

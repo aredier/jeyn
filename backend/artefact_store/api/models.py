@@ -15,7 +15,6 @@ class Artefact(models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
-        # TODO better error managment
         validate(self.artefact_data, self.artefact_type_reference.schema)
         return super().save(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 

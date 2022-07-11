@@ -1,5 +1,7 @@
 import attr
 
+import typing_utils
+
 
 @attr.s(frozen=True, eq=True, order=True)
 class Version:
@@ -44,12 +46,29 @@ class Version:
         if value < 0:
             raise ValueError(f"version numbers should be positive integers, got {value} for {attribute.name} version")
 
+    @staticmethod
+    def get_version_json_schema() -> typing_utils.JSON:
+        return {
+            "type": "object",
+            "properties": {
+                "major": {"type": "number"},
+                "minor": {"type": "number"},
+                "patch": {"type": "number"},
+            },
+            "required": [
+                "major", "minor", "patch"
+            ]
+        }
+
     @classmethod
     def from_version_string(cls, version_string: str) -> "Version":
         return cls(*map(int, version_string.split(".")))
 
     def to_version_string(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
+
+    def to_json(self) -> typing_utils.JSON:
+        return {"major": self.major, "minor": self.minor, "patch": self.patch}
 
     def is_compatible(self, other: "Version") -> bool:
         if self.major == 0 and other.major == 0:
