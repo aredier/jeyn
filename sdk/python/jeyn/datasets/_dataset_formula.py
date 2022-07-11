@@ -15,6 +15,7 @@ class DatasetFormulaArtefact(backend.artefacts.Artefact):
         schema = {
             "type": "object",
             "properties": {
+                "version": Version.get_version_json_schema(),
                 "formula_name": {
                     "type": "string",
                     "description": "name of the formula"
@@ -32,18 +33,25 @@ class DatasetFormulaArtefact(backend.artefacts.Artefact):
         }
 
     def __init__(
-            self, name: str, formula_type: str, formula_kwargs: Dict[str, Any], output_catalog: "catalogs.DataCatalog"
+            self,
+            name: str,
+            formula_type: str,
+            output_catalog: "catalogs.DataCatalog",
+            version: Version,
+            formula_kwargs: Dict[str, Any],
     ):
         self.name = name
         self.formula_type = formula_type
         self.formula_kwargs = formula_kwargs
         self.output_catalog = output_catalog
+        self.version = version
 
     def artefact_json(self) -> typing_utils.JSON:
         return {
             "formula_name": self.name,
             "formula_type": self.formula_type,
             "output_catalog": self.output_catalog.to_json(),
+            "version": self.version.to_json(),
             "formula_kwargs": self.formula_kwargs
         }
 
@@ -53,6 +61,7 @@ class DatasetFormulaArtefact(backend.artefacts.Artefact):
             name=artefact_json["artefact_data"]["formula_name"],
             formula_type=artefact_json["artefact_data"]["formula_type"],
             formula_kwargs=artefact_json["artefact_data"]["formula_kwargs"],
+            version=Version(**artefact_json["artefact_data"]["version"]),
             output_catalog=catalogs.DataCatalog.from_json(artefact_json["artefact_data"]["output_catalog"])
         )
 
@@ -73,7 +82,7 @@ class DatasetFormula(abc.ABC):
     """
 
     formula_name: str
-    version: Optional[Version]
+    version: Version = attr.field(converter=lambda x: Version.from_version_string(x) if isinstance(x, str) else x)
     output_catalog: "jeyn.catalogs.DataCatalog"
     _artefact: "DatasetFormulaArtefact" = attr.field(default=None, init=False)
 
@@ -101,14 +110,15 @@ class DatasetFormula(abc.ABC):
             name=self.formula_name,
             formula_type=self.__class__.__name__,
             formula_kwargs=self.formula_kwargs,
-            output_catalog=self.output_catalog
+            output_catalog=self.output_catalog,
+            version=self.version
         )
 
     @classmethod
     def from_artefact(cls, formula_artefact: "DatasetFormulaArtefact") -> "DatasetFormula":
         artefact_object = cls(
             formula_name=formula_artefact.name,
-            version=None,
+            version=formula_artefact.version,
             output_catalog=formula_artefact.output_catalog,
             **formula_artefact.formula_kwargs
         )

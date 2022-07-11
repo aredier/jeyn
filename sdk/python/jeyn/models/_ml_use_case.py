@@ -56,8 +56,9 @@ class MlUseCase:
     @artefact.setter
     def artefact(self, value):
         if self._artefact is not None:
-            # TODO use better error
-            raise errors.JeynBaseError("cannot set artefact more than once")
+            raise errors.InternalJeynError(
+                "artefact is being set serveral times, only set the use_case's artefact once."
+            )
         self._artefact = value
 
     def _to_artefact(self) -> "UseCaseArtefact":

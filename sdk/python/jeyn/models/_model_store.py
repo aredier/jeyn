@@ -56,8 +56,10 @@ class ModelStore:
 
     def save_checkpoint(self, checkpoint: "models.ModelCheckpoint") -> "models.ModelCheckpoint":
         if checkpoint.model is None:
-            # TODO add reference to the method to use to add model to the checkpoint
-            raise errors.SaveError("cannot save model checkpoint, no model object was provoded")
+            raise errors.SaveError(
+                "cannot save model checkpoint, no model object was provided. You can set it with "
+                "`checkpoint.model = my_model"
+            )
         try:
             self._save_model_object(checkpoint)
         except Exception as error:

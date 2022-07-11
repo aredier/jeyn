@@ -1,0 +1,5 @@
+build:
+  setup: "./setup.py"
+  pipleines:
+    dataset: oop_demo_project.pipelines.build_dataset
+    train: oop_demo_project.pipelines.build_dataset

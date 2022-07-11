@@ -23,7 +23,6 @@ class ArtefactClassMeta:
         self._update_with_remote_artefact_type(response.json())
 
     def _update_with_remote_artefact_type(self, remote_artefact_type_json: typing_utils.JSON):
-        # TODO
         pass
 
     def _check_type_data(self, response_json: typing_utils.JSON):

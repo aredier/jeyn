@@ -1,0 +1,5 @@
+build:
+  setup: "./setup.py"
+  pipleines:
+    dataset: functional.pipelines.build_dataset
+    train: functional.pipelines.build_dataset

@@ -39,7 +39,7 @@ if __name__ == "__main__":
     use_case = jeyn.models.MlUseCase(
         name="test_use_case",
         description="a use case just for tests",
-        output_schema=None
+        output_schem=None
     )
     store.save_use_case(use_case)
     checkpoint = jeyn.models.ModelCheckpoint(

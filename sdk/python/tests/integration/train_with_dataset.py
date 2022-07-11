@@ -48,7 +48,7 @@ def init_dataset(store: jeyn.datasets.DatasetStore):
     dataset_formula = store.get_formula_from_name("test_formula", jeyn.datasets.formulas.StreamingFormula)
     if dataset_formula is None:
         dataset_formula = jeyn.datasets.formulas.StreamingFormula(
-            "test_formula", version=None, output_catalog=InputDataCatalog(), data_dir=dataset_path
+            "test_formula", version="0.1.0", output_catalog=InputDataCatalog(), data_dir=dataset_path
         )
         dataset_formula.save()
 

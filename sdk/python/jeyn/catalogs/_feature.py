@@ -26,7 +26,7 @@ class Feature(abc.ABC):
     """
 
     dtype: Dtypes = attr.field()
-    shape: List[int] = attr.field()
+    shape: List[int] = attr.field(converter=list)
     name: Optional[str] = attr.field(default=None)
 
     @shape.validator
