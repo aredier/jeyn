@@ -24,7 +24,9 @@ class DatasetStore:
         if len(formula_artefacts) == 0:
             return None
         if len(formula_artefacts) > 1:
-            return formula_cls.from_artefact(sorted(formula_artefacts)[-1])
+            return formula_cls.from_artefact(
+                sorted(formula_artefacts, key=operator.attrgetter("version"))[-1]
+            )
         return formula_cls.from_artefact(formula_artefacts[0])
 
     def _get_formula_batch_relation_jsons(self, formula):
