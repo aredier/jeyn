@@ -55,6 +55,41 @@ class TestArtefactQuery(TestCase):
         assert response_json[0]["artefact_data"] == bilbo_json
 
 
+    def test_complex_query(self):
+        artefact_type = models.ArtefactType.objects.get(type_name="lor_characters")
+
+        bilbo_json = {
+            "character_name": "bilbo",
+            "charater_race": "hobbit",
+            "character_armement": {
+                "weapon_type": "dagger",
+                "weapon_name": "sting"
+            }
+        }
+
+        bilbo = models.Artefact(artefact_type_reference=artefact_type, artefact_data = bilbo_json)
+        frodo_json = {
+            "character_name": "frodo",
+            "charater_race": "hobbit",
+            "character_armement": {
+                "weapon_type": "enchanted dagger",
+                "weapon_name": "sting"
+            }
+        }
+        frodo = models.Artefact(artefact_type_reference=artefact_type, artefact_data=frodo_json)
+        bilbo.save()
+        frodo.save()
+
+        test_client = Client()
+        response = test_client.get(
+            "/api/artefact/query/",
+            {"artefact_data__character_armement": {"weapon_type": "dagger", "weapon_name": "sting"}}
+        )
+        assert response.status_code == 200
+        response_json = response.json()
+        assert len(response_json) == 1
+        assert response_json[0]["artefact_data"] == bilbo_json
+
 
     def test_multi_query(self):
         artefact_type = models.ArtefactType.objects.get(type_name="lor_characters")
@@ -98,26 +133,3 @@ class TestArtefactQuery(TestCase):
         assert response.status_code == 200
         response_json = response.json()
         assert len(response_json) == 0
-
-    def test_query_wildecard(self):
-
-        artefact_type = models.ArtefactType.objects.get(type_name="lor_characters")
-
-        bilbo_json = {
-            "character_name": "bilbo",
-            "charater_race": "hobbit",
-            "character_armement": {
-                "weapon_type": "dagger",
-                "weapon_name": "sting"
-            }
-        }
-
-        bilbo = models.Artefact(artefact_type_reference=artefact_type, artefact_data = bilbo_json)
-        bilbo.save()
-
-        test_client = Client()
-        response = test_client.get("/api/artefact/query/", {"artefact_data__character_armement__weapon_name": "sting"})
-        assert response.status_code == 200
-        response_json = response.json()
-        assert len(response_json) == 1
-        assert response_json[0]["artefact_data"] == bilbo_json

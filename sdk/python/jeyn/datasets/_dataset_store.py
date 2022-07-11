@@ -1,8 +1,8 @@
 import operator
-from typing import Optional, Type, List
+from typing import Optional, Type, List, Union
 
 import backend.artefacts
-from jeyn import datasets, errors
+from jeyn import datasets, errors, Version
 
 
 class DatasetStore:
@@ -11,14 +11,20 @@ class DatasetStore:
     load formulas or batches.
     """
 
-    def get_formula_from_name(
-            self, name: str, formula_cls: Type[datasets.DatasetFormula]
-    ) -> Optional["datasets.DatasetFormula"]:
-        formula_artefacts = datasets.DatasetFormulaArtefact.get(formula_name=name)
+    def get_fromula(
+            self,
+            formula_cls: Type[datasets.DatasetFormula],
+            name: Optional[str] = None,
+            version: Optional[Union[str, Version]] = None
+    ):
+        version = Version.from_version_string(version) if isinstance(version,str) else version
+        formula_artefacts = datasets.DatasetFormulaArtefact.get(
+            formula_name=name, version=version.to_json() if version is not None else None
+        )
         if len(formula_artefacts) == 0:
             return None
         if len(formula_artefacts) > 1:
-            raise errors.LoadingError(f"got more than one formula with the name {name}")
+            return formula_cls.from_artefact(sorted(formula_artefacts)[-1])
         return formula_cls.from_artefact(formula_artefacts[0])
 
     def _get_formula_batch_relation_jsons(self, formula):

@@ -96,7 +96,7 @@ class Artefact(abc.ABC):
 
     @staticmethod
     def _build_query_string(query_dict: Dict[str, Any]) -> str:
-        return "&".join(f"artefact_data__{k}={v}" for k, v in query_dict.items())
+        return "&".join(f"artefact_data__{k}={v}" for k, v in query_dict.items() if v is not None)
 
     @classmethod
     def _generate_metadata(cls) -> "artefacts.ArtefactClassMeta":
