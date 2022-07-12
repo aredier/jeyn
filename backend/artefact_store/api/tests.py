@@ -1,4 +1,6 @@
 import json
+import base64
+from typing import Dict, Any
 
 from django.test import TestCase, Client
 
@@ -20,7 +22,8 @@ class TestArtefactQuery(TestCase):
                         "type": "object",
                         "properties": {
                             "weapon_type": {"type": "string"},
-                            "weapon_name": {"type": "string"}
+                            "weapon_name": {"type": "string"},
+                            "n_kills": {"type": "number"}
                         }
                     }
                 },
@@ -31,6 +34,10 @@ class TestArtefactQuery(TestCase):
                 ]
             }
         )
+
+    @staticmethod
+    def _format_query(query_args: Dict[str, Any]) -> bytes:
+        return base64.b64encode(json.dumps(query_args).encode("utf-8"))
 
     def test_simple_query(self):
         artefact_type = models.ArtefactType.objects.get(type_name="lor_characters")
@@ -48,7 +55,11 @@ class TestArtefactQuery(TestCase):
         bilbo.save()
 
         test_client = Client()
-        response = test_client.get("/api/artefact/query/", {"artefact_data__character_name":"bilbo"})
+        response = test_client.get(
+            "/api/artefact/query/",
+            {
+                "q": self._format_query({"artefact_data__character_name": "bilbo"})
+            })
         assert response.status_code == 200
         response_json = response.json()
         assert len(response_json) == 1
@@ -63,7 +74,8 @@ class TestArtefactQuery(TestCase):
             "charater_race": "hobbit",
             "character_armement": {
                 "weapon_type": "dagger",
-                "weapon_name": "sting"
+                "weapon_name": "sting",
+                "n_kills": 2
             }
         }
 
@@ -72,8 +84,9 @@ class TestArtefactQuery(TestCase):
             "character_name": "frodo",
             "charater_race": "hobbit",
             "character_armement": {
-                "weapon_type": "enchanted dagger",
-                "weapon_name": "sting"
+                "weapon_type": "dagger",
+                "weapon_name": "sting",
+                "n_kills": 4
             }
         }
         frodo = models.Artefact(artefact_type_reference=artefact_type, artefact_data=frodo_json)
@@ -83,7 +96,12 @@ class TestArtefactQuery(TestCase):
         test_client = Client()
         response = test_client.get(
             "/api/artefact/query/",
-            {"artefact_data__character_armement": {"weapon_type": "dagger", "weapon_name": "sting"}}
+            {"q": self._format_query(
+                {
+                    "artefact_data__character_armement__weapon_type": "dagger",
+                    "artefact_data__character_armement__n_kills": 2
+                }
+            )}
         )
         assert response.status_code == 200
         response_json = response.json()
@@ -119,7 +137,9 @@ class TestArtefactQuery(TestCase):
         test_client = Client()
         response = test_client.get(
             "/api/artefact/query/",
-            {"artefact_data__charater_race": "hobbit", "artefact_data__character_name": "bilbo"}
+            {"q": self._format_query(
+                {"artefact_data__charater_race": "hobbit", "artefact_data__character_name": "bilbo"}
+            )}
         )
         assert response.status_code == 200
         response_json = response.json()
@@ -128,7 +148,9 @@ class TestArtefactQuery(TestCase):
 
         response = test_client.get(
             "/api/artefact/query/",
+            {"q": self._format_query(
             {"artefact_data__charater_race": "elf", "artefact_data__character_name": "bilbo"}
+            )}
         )
         assert response.status_code == 200
         response_json = response.json()
