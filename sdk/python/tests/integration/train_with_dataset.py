@@ -45,14 +45,10 @@ def init_dataset(store: jeyn.datasets.DatasetStore):
     dataset_path = "/tmp/jeyn/datasets/breasts"
     os.makedirs(dataset_path, exist_ok=True)
     batch_df.to_csv(f"{dataset_path}/{dt.datetime.utcnow().isoformat()}.csv")
-    dataset_formula = store.get_fromula(
-        formula_cls=jeyn.datasets.formulas.StreamingFormula, name="test_formula", version="0.1.0"
+    dataset_formula = jeyn.datasets.formulas.StreamingFormula(
+        "test_formula", version="0.1.0", output_catalog=InputDataCatalog(), data_dir=dataset_path
     )
-    if dataset_formula is None:
-        dataset_formula = jeyn.datasets.formulas.StreamingFormula(
-            "test_formula", version="0.1.0", output_catalog=InputDataCatalog(), data_dir=dataset_path
-        )
-        dataset_formula.save()
+    dataset_formula.initialise()
 
 
 if __name__ == '__main__':
@@ -71,7 +67,6 @@ if __name__ == '__main__':
     ])
     model.compile("adam", "mse")
     model.fit(dataset.loc[:, ["mean radius", "mean texture", "mean perimeter"]], dataset["targets"])
-    dataset_store.save_batch(training_data)
 
     store = jeyn.models.ModelStore()
     serializer = KerasSerializer()
@@ -80,8 +75,13 @@ if __name__ == '__main__':
         name="test_use_case",
         description="a use case just for tests"
     )
+
+    # saving all that is required.
     store.save_use_case(use_case)
-    checkpoint = jeyn.models.ModelCheckpoint(
+    dataset_store.save_batch(training_data)
+    if store.get_latest_use_case_checkpoint(use_case) is None:
+        # first train, creating the use case
+        checkpoint = jeyn.models.ModelCheckpoint(
         use_case=use_case,
         version=jeyn.Version.from_version_string("0.1.0"),
         output_catalog=InferenceDataCatalog(),
@@ -89,6 +89,11 @@ if __name__ == '__main__':
         dataset_batch=training_data,
         model=model
     )
+    else:
+        checkpoint = use_case.update_patch(
+            dataset=training_data,
+            model=model
+        )
 
     store.save_checkpoint(checkpoint)
 

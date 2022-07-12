@@ -11,8 +11,8 @@ class DatasetStore:
     load formulas or batches.
     """
 
+    @staticmethod
     def get_fromula(
-            self,
             formula_cls: Type[datasets.DatasetFormula],
             name: Optional[str] = None,
             version: Optional[Union[str, Version]] = None
@@ -28,6 +28,7 @@ class DatasetStore:
                 sorted(formula_artefacts, key=operator.attrgetter("version"))[-1]
             )
         return formula_cls.from_artefact(formula_artefacts[0])
+
 
     def _get_formula_batch_relation_jsons(self, formula):
         if not formula.artefact.is_saved:

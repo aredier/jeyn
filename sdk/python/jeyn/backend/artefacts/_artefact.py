@@ -1,4 +1,5 @@
 import abc
+import base64
 import json
 from typing import List, Any, Dict
 
@@ -28,7 +29,6 @@ class Artefact(abc.ABC):
             artefact_object = cls.from_artefact_json(artefact_json)
             artefact_object._artefact_id = artefact_json["id"]
             result.append(artefact_object)
-
         return result
 
     @classmethod
@@ -87,20 +87,19 @@ class Artefact(abc.ABC):
             if relationship["relationship_type"] == relationship_type
         ]
         if len(use_case_artefact_ids) == 0:
-            raise errors.LoadingError(f"checkpoint has no relationship of type <{relationship_type}>,"
+            # TODO use jeyn error
+            raise ValueError(f"checkpoint has no relationship of type <{relationship_type}>,"
                                       f" backend data seems corrupt.")
         if len(use_case_artefact_ids) > 1:
-            raise errors.LoadingError(f"checkpoint seems to have several relationship of type <{relationship_type}>, "
+            raise ValueError(f"checkpoint seems to have several relationship of type <{relationship_type}>, "
                                       f"backend data seems corrupt.")
         return use_case_artefact_ids[0]
 
     @staticmethod
     def _build_query_string(query_dict: Dict[str, Any]) -> str:
-        return "&".join(
-            f"artefact_data__{k}={v}"
-            for k, v
-            in Artefact._build_query_argument(query_dict).items()
-        )
+        formated_query_json = {f"artefact_data__{k}": v for k, v in query_dict.items()}
+        query_bytes = base64.b64encode(json.dumps(formated_query_json).encode('utf-8'))
+        return f"q={query_bytes.decode('utf-8')}"
 
     @staticmethod
     def _build_query_argument(query_dict: Dict[str, Any]) -> Dict[str, str]:
