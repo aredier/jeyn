@@ -89,7 +89,7 @@ class ModelStore:
         return models.MlUseCase.from_artefact(use_case_artefact)
 
     @staticmethod
-    def get_latest_use_case_checkpoint(use_case: "models.MlUseCase") -> "models.ModelCheckpoint":
+    def get_latest_use_case_checkpoint(use_case: "models.MlUseCase") -> Optional["models.ModelCheckpoint"]:
         if not use_case.artefact.is_saved:
             raise errors.LoadingError(f"cannot load {use_case}'s checkpoints as it is not saved in the backend yet")
         use_case_child_relations = backend.artefacts.Relationship.get_artefact_children_json(use_case.artefact)
@@ -97,6 +97,8 @@ class ModelStore:
             relation for relation in use_case_child_relations
             if relation["relationship_type"] == "checkpoint_use_case"
         ]
+        if len(all_checkpoint_relations) == 0:
+            return None
         latest_checkpoint = max(all_checkpoint_relations, key=operator.itemgetter("creation_time"))
         return models.ModelCheckpoint.from_artefact(models.CheckpointArtefact.get_from_id(latest_checkpoint["child"]))
 

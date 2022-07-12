@@ -35,3 +35,6 @@ class DataConsistencyError(JeynBaseError):
     """
     error raised when data is inconsistent
     """
+
+class ChangedCatalogError(JeynBaseError):
+    """error raised when a catalog changes but not the corresponding version"""

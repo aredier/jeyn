@@ -6,7 +6,7 @@ import attr
 
 import jeyn
 import typing_utils
-from jeyn import Version, datasets, backend, catalogs
+from jeyn import Version, datasets, backend, catalogs, errors
 
 
 class DatasetFormulaArtefact(backend.artefacts.Artefact):
@@ -127,3 +127,22 @@ class DatasetFormula(abc.ABC):
 
     def save(self):
         self.artefact.save()
+
+    def initialise(self) -> None:
+        """will save this version if it does not exist and check version consistency otherwise"""
+        remote_self = datasets.DatasetStore.get_fromula(
+            formula_cls=self.__class__,
+            name=self.formula_name,
+            version=self.version
+        )
+        if remote_self is None:
+            self.save()
+            return
+        if remote_self.output_catalog != remote_self.output_catalog:
+            raise errors.ChangedCatalogError(
+                "a formula with the same version already esxists but has a different output catalog."
+                " You can use the `store.get_formula` method to get it or change this formula's version "
+                "to ensure version consistency")
+        self._artefact = remote_self.artefact
+
+
