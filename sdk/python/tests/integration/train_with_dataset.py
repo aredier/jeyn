@@ -46,7 +46,7 @@ def init_dataset(store: jeyn.datasets.DatasetStore):
     os.makedirs(dataset_path, exist_ok=True)
     batch_df.to_csv(f"{dataset_path}/{dt.datetime.utcnow().isoformat()}.csv")
     dataset_formula = store.get_fromula(
-        formula_cls=jeyn.datasets.formulas.StreamingFormula, name="test_formula"
+        formula_cls=jeyn.datasets.formulas.StreamingFormula, name="test_formula", version="0.1.0"
     )
     if dataset_formula is None:
         dataset_formula = jeyn.datasets.formulas.StreamingFormula(
@@ -59,7 +59,8 @@ if __name__ == '__main__':
     dataset_store = jeyn.datasets.DatasetStore()
     init_dataset(dataset_store)
     dataset_formula = dataset_store.get_fromula(
-        formula_cls=jeyn.datasets.formulas.StreamingFormula, name="test_formula"
+        formula_cls=jeyn.datasets.formulas.StreamingFormula,
+        name="test_formula", version="0.1.0"
     )
     training_data = dataset_formula.get_new_batch()
 

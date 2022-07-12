@@ -1,3 +1,6 @@
+import json
+import base64
+
 from rest_framework import viewsets, request, views, response
 
 from . import serializers, models
@@ -16,7 +19,8 @@ class ArtefactViewset(viewsets.ModelViewSet):
 class ArtefactQueryView(views.APIView):
 
     def get(self, request: request.Request):
-        objects = models.Artefact.objects.filter(**{key: value for key, value in request.query_params.items()})
+        query_parameters = json.loads(base64.b64decode(request.query_params["q"]))
+        objects = models.Artefact.objects.filter(**{key: value for key, value in query_parameters.items()})
         artefacts = objects.all()
         serializer = serializers.ArtefactSerializer(artefacts, many=True)
         return response.Response(serializer.data)
