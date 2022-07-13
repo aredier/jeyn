@@ -83,10 +83,3 @@ class Version:
 
     def update_patch(self) -> "Version":
         return Version(self.major, self.minor, self.patch + 1)
-
-
-if __name__ == "__main__":
-    foo = Version(0, 1, 0)
-    print(foo)
-    bar = Version(0, 2, 0)
-    print(foo.is_compatible(bar))
